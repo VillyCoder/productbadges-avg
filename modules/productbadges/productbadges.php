@@ -4,6 +4,29 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+class ProductBadge extends ObjectModel
+{
+    public $bg_color;
+    public $text_color;
+    public $position;
+    public $active;
+    public $text; // campo multilenguaje, se almacena en productbadges_lang
+
+    public static $definition = [
+        'table'     => 'productbadges',
+        'primary'   => 'id_productbadge',
+        'multilang' => true,
+        'fields'    => [
+            'bg_color'   => ['type' => self::TYPE_STRING, 'validate' => 'isColor',       'size' => 7,  'required' => true],
+            'text_color' => ['type' => self::TYPE_STRING, 'validate' => 'isColor',       'size' => 7,  'required' => true],
+            'position'   => ['type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'size' => 20, 'required' => true],
+            'active'     => ['type' => self::TYPE_BOOL,   'validate' => 'isBool'],
+            // campo multilenguaje
+            'text'       => ['type' => self::TYPE_STRING, 'validate' => 'isCleanHtml',   'size' => 64, 'required' => true, 'lang' => true],
+        ],
+    ];
+}
+
 class Productbadges extends Module
 {
     public function __construct()
