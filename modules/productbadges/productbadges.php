@@ -53,8 +53,10 @@ class Productbadges extends Module
     {
         return parent::install()
             && $this->registerHook('displayProductFlags')
+            && $this->registerHook('actionProductFlagsModifier')
             && $this->registerHook('displayAfterProductThumbs')
             && $this->registerHook('actionFrontControllerSetMedia')
+            && $this->registerHook('displayHeader')
             && $this->installTab()
             && $this->installSql()
             && $this->installConfig();
@@ -250,58 +252,21 @@ class Productbadges extends Module
 
     public function hookDisplayProductFlags($params)
     {
-        if (!(bool) Configuration::get('PRODUCTBADGES_ACTIVE')) {
-            return;
-        }
-        if (!(bool) Configuration::get('PRODUCTBADGES_SHOW_LISTING')) {
-            return;
-        }
-
-        if (empty($params['product']['id_product'])) {
-            return;
-        }
-
-        $id_product = (int) $params['product']['id_product'];
-        $badges     = $this->getBadgesForProduct($id_product);
-
-        if (empty($badges)) {
-            return;
-        }
-
-        $this->context->smarty->assign('badges', $badges);
-
-        return $this->fetch('module:productbadges/views/templates/hook/displayProductFlags.tpl');
+        // Classic PS 1.7.6+ usa actionProductFlagsModifier para inyectar flags.
+        // Retornamos vacío para evitar doble renderizado en temas que invocan ambos hooks.
+        return;
     }
 
     public function hookDisplayAfterProductThumbs($params)
     {
-        if (!(bool) Configuration::get('PRODUCTBADGES_ACTIVE')) {
-            return;
-        }
-        if (!(bool) Configuration::get('PRODUCTBADGES_SHOW_PRODUCT')) {
-            return;
-        }
-
-        $id_product = (int) Tools::getValue('id_product');
-
-        if (!$id_product) {
-            return;
-        }
-
-        $badges = $this->getBadgesForProduct($id_product);
-
-        if (empty($badges)) {
-            return;
-        }
-
-        $this->context->smarty->assign('badges', $badges);
-
-        return $this->fetch('module:productbadges/views/templates/hook/displayAfterProductThumbs.tpl');
+        // La ficha de producto se gestiona via hookActionProductFlagsModifier
+        // que inyecta las badges en el sistema nativo de flags del tema Classic.
+        return;
     }
 
     private function getBadgesForProduct($id_product)
     {
-        $id_lang = (int) $this->context->language->id_lang;
+        $id_lang = (int) $this->context->language->id;
         $max     = max(1, (int) Configuration::get('PRODUCTBADGES_MAX_BADGES'));
 
         return Db::getInstance()->executeS(
@@ -316,6 +281,72 @@ class Productbadges extends Module
                 AND b.active = 1
             LIMIT ' . $max
         );
+    }
+
+    public function hookActionProductFlagsModifier($params)
+    {
+        if (!(bool) Configuration::get('PRODUCTBADGES_ACTIVE')) {
+            return;
+        }
+
+        $is_product_page = isset($this->context->controller->php_self)
+                           && $this->context->controller->php_self === 'product';
+
+        if ($is_product_page) {
+            if (!(bool) Configuration::get('PRODUCTBADGES_SHOW_PRODUCT')) {
+                return;
+            }
+        } else {
+            if (!(bool) Configuration::get('PRODUCTBADGES_SHOW_LISTING')) {
+                return;
+            }
+        }
+
+        $id_product = (int) ($params['product']['id_product'] ?? 0);
+        if (!$id_product) {
+            return;
+        }
+
+        $badges = $this->getBadgesForProduct($id_product);
+        foreach ($badges as $badge) {
+            $id       = (int) $badge['id_productbadge'];
+            $position = in_array($badge['position'], ['top-left', 'top-right'], true)
+                ? $badge['position'] : 'top-left';
+
+            $params['flags']['productbadge-' . $id] = [
+                'type'  => 'productbadge badge-' . $id . ' productbadge--' . $position,
+                'label' => $badge['text'],
+            ];
+        }
+    }
+
+    public function hookDisplayHeader()
+    {
+        if (!(bool) Configuration::get('PRODUCTBADGES_ACTIVE')) {
+            return;
+        }
+
+        $badges = Db::getInstance()->executeS(
+            'SELECT id_productbadge, bg_color, text_color
+            FROM `' . _DB_PREFIX_ . 'productbadges`
+            WHERE active = 1'
+        );
+
+        if (empty($badges)) {
+            return;
+        }
+
+        $css = '<style>';
+        foreach ($badges as $b) {
+            $id  = (int) $b['id_productbadge'];
+            $bg  = htmlspecialchars($b['bg_color'],   ENT_QUOTES, 'UTF-8');
+            $col = htmlspecialchars($b['text_color'], ENT_QUOTES, 'UTF-8');
+            // Selector más específico que el del tema Classic (.product-flags li.product-flag = 0,2,1)
+            $css .= '.product-flags li.product-flag.badge-' . $id . '{background-color:' . $bg . ';color:' . $col . ';}';
+        }
+        $css .= '</style>';
+
+        return $css;
     }
 
     public function hookActionFrontControllerSetMedia()

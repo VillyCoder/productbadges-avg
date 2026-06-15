@@ -1,4 +1,13 @@
 $(document).ready(function () {
+    // Buscador de productos en el panel de asignación
+    $('#badge-product-search').on('input', function () {
+        var q = $(this).val().toLowerCase();
+        $('input[name="product_ids[]"]').each(function () {
+            var $row = $(this).closest('tr');
+            $row.toggle($row.find('td:last').text().toLowerCase().indexOf(q) !== -1);
+        });
+    });
+
     // Marcar/desmarcar todos los productos
     $('#check-all-products').on('change', function () {
         $('input[name="product_ids[]"]').prop('checked', $(this).is(':checked'));

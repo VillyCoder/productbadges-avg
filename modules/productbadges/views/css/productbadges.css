@@ -1,7 +1,5 @@
-/* Badge base */
+/* Estilos base compartidos */
 .productbadge {
-    position: absolute;
-    z-index: 10;
     padding: 4px 8px;
     font-size: 11px;
     font-weight: 700;
@@ -12,25 +10,42 @@
     white-space: nowrap;
 }
 
-/* Posiciones en listados (el .product-miniature figure ya tiene position:relative en Classic theme) */
-.productbadge--top-left {
-    top: 8px;
-    left: 8px;
+/*
+ * Modo standalone: para temas que llaman directamente al hook displayProductFlags.
+ * La badge se posiciona de forma absoluta sobre la imagen del producto.
+ */
+.productbadge:not(.product-flag) {
+    position: absolute;
+    z-index: 10;
+}
+.productbadge:not(.product-flag).productbadge--top-left  { top: 8px; left: 8px; }
+.productbadge:not(.product-flag).productbadge--top-right { top: 8px; right: 8px; }
+
+/*
+ * Modo nativo (actionProductFlagsModifier): la badge vive dentro de
+ * .product-flags (flex column). Forzamos row + wrap para que queden
+ * en horizontal cuando hay varias.
+ */
+.product-flags li.product-flag.productbadge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
 }
 
-.productbadge--top-right {
-    top: 8px;
-    right: 8px;
+.product-flags {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start;
+    gap: 4px;
 }
 
-/* Ficha de producto: badges como píldoras inline bajo la imagen */
+/* Contenedor auxiliar (displayAfterProductThumbs en temas legacy) */
 .productbadges-product {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 10px;
 }
-
 .productbadges-product .productbadge {
     position: relative;
     display: inline-flex;

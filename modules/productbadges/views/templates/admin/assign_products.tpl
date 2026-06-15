@@ -6,6 +6,11 @@
         <input type="hidden" name="submitAssignProducts" value="1">
         <input type="hidden" name="id_productbadge" value="{$badge_id|intval}">
         <div class="panel-body">
+            <div class="form-group">
+                <input type="text" id="badge-product-search"
+                       class="form-control"
+                       placeholder="{l s='Buscar producto...' mod='productbadges'}">
+            </div>
             <table class="table tableDnD">
                 <thead>
                     <tr>

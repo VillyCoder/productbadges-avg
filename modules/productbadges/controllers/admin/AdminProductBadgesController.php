@@ -8,6 +8,7 @@ class AdminProductBadgesController extends ModuleAdminController
 {
     public function __construct()
     {
+        $this->bootstrap  = true;
         $this->table      = 'productbadges';
         $this->className  = 'ProductBadge';
         $this->identifier = 'id_productbadge';
@@ -159,7 +160,7 @@ class AdminProductBadgesController extends ModuleAdminController
 
     private function renderAssignForm()
     {
-        $id_lang  = (int) $this->context->language->id_lang;
+        $id_lang  = (int) $this->context->language->id;
         $id_badge = (int) $this->object->id;
 
         $id_shop = (int) $this->context->shop->id;
