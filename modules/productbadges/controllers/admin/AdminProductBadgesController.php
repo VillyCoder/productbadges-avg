@@ -162,11 +162,15 @@ class AdminProductBadgesController extends ModuleAdminController
         $id_lang  = (int) $this->context->language->id_lang;
         $id_badge = (int) $this->object->id;
 
+        $id_shop = (int) $this->context->shop->id;
+
         $products = Db::getInstance()->executeS(
             'SELECT p.id_product, pl.name
             FROM `' . _DB_PREFIX_ . 'product` p
             INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
-                ON p.id_product = pl.id_product AND pl.id_lang = ' . $id_lang . '
+                ON p.id_product = pl.id_product
+                AND pl.id_lang = ' . $id_lang . '
+                AND pl.id_shop = ' . $id_shop . '
             ORDER BY pl.name ASC'
         );
 
