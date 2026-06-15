@@ -15,6 +15,15 @@ No requiere Composer ni dependencias JavaScript externas más allá de jQuery (y
 
 ## Instalación
 
+### Opción A — Subir ZIP desde el Back Office
+
+1. Abrir la carpeta `modules/` del repositorio.
+2. Hacer clic derecho sobre la carpeta `productbadges` → **Comprimir** (o **Enviar a → Carpeta comprimida**).
+3. Acceder al Back Office → **Módulos y servicios** → **Subir módulo**.
+4. Seleccionar el archivo `productbadges.zip` generado.
+
+### Opción B — Instalación manual
+
 1. Copiar la carpeta `productbadges` dentro de `[prestashop]/modules/`.
 2. Acceder al Back Office → **Módulos y servicios**.
 3. Buscar **Product Badges** e instalar.
