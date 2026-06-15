@@ -2,7 +2,7 @@
     <div class="panel-heading">
         <i class="icon-tags"></i> {l s='Asignar productos a esta badge' mod='productbadges'}
     </div>
-    <form action="{$current_index|escape:'html':'UTF-8'}&token={$assign_token|escape:'html':'UTF-8'}" method="post">
+    <form action="{$current_index|escape:'html':'UTF-8'}&amp;token={$assign_token|escape:'html':'UTF-8'}" method="post">
         <input type="hidden" name="submitAssignProducts" value="1">
         <input type="hidden" name="id_productbadge" value="{$badge_id|intval}">
         <div class="panel-body">

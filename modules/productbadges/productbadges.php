@@ -257,6 +257,10 @@ class Productbadges extends Module
             return;
         }
 
+        if (empty($params['product']['id_product'])) {
+            return;
+        }
+
         $id_product = (int) $params['product']['id_product'];
         $badges     = $this->getBadgesForProduct($id_product);
 
@@ -298,7 +302,7 @@ class Productbadges extends Module
     private function getBadgesForProduct($id_product)
     {
         $id_lang = (int) $this->context->language->id_lang;
-        $max     = (int) Configuration::get('PRODUCTBADGES_MAX_BADGES');
+        $max     = max(1, (int) Configuration::get('PRODUCTBADGES_MAX_BADGES'));
 
         return Db::getInstance()->executeS(
             'SELECT b.id_productbadge, b.bg_color, b.text_color, b.position, bl.text
