@@ -250,14 +250,68 @@ class Productbadges extends Module
 
     public function hookDisplayProductFlags($params)
     {
-        // Muestra badges en listados de categoría, búsqueda y home
-        // Se implementa en la fase de frontend
+        if (!(bool) Configuration::get('PRODUCTBADGES_ACTIVE')) {
+            return;
+        }
+        if (!(bool) Configuration::get('PRODUCTBADGES_SHOW_LISTING')) {
+            return;
+        }
+
+        $id_product = (int) $params['product']['id_product'];
+        $badges     = $this->getBadgesForProduct($id_product);
+
+        if (empty($badges)) {
+            return;
+        }
+
+        $this->context->smarty->assign('badges', $badges);
+
+        return $this->fetch('module:productbadges/views/templates/hook/displayProductFlags.tpl');
     }
 
     public function hookDisplayAfterProductThumbs($params)
     {
-        // Muestra badges en la ficha de producto
-        // Se implementa en la fase de frontend
+        if (!(bool) Configuration::get('PRODUCTBADGES_ACTIVE')) {
+            return;
+        }
+        if (!(bool) Configuration::get('PRODUCTBADGES_SHOW_PRODUCT')) {
+            return;
+        }
+
+        $id_product = (int) Tools::getValue('id_product');
+
+        if (!$id_product) {
+            return;
+        }
+
+        $badges = $this->getBadgesForProduct($id_product);
+
+        if (empty($badges)) {
+            return;
+        }
+
+        $this->context->smarty->assign('badges', $badges);
+
+        return $this->fetch('module:productbadges/views/templates/hook/displayAfterProductThumbs.tpl');
+    }
+
+    private function getBadgesForProduct($id_product)
+    {
+        $id_lang = (int) $this->context->language->id_lang;
+        $max     = (int) Configuration::get('PRODUCTBADGES_MAX_BADGES');
+
+        return Db::getInstance()->executeS(
+            'SELECT b.id_productbadge, b.bg_color, b.text_color, b.position, bl.text
+            FROM `' . _DB_PREFIX_ . 'productbadges` b
+            INNER JOIN `' . _DB_PREFIX_ . 'productbadges_lang` bl
+                ON b.id_productbadge = bl.id_productbadge
+                AND bl.id_lang = ' . $id_lang . '
+            INNER JOIN `' . _DB_PREFIX_ . 'productbadges_product` bp
+                ON b.id_productbadge = bp.id_productbadge
+            WHERE bp.id_product = ' . (int) $id_product . '
+                AND b.active = 1
+            LIMIT ' . $max
+        );
     }
 
     public function hookActionFrontControllerSetMedia()
