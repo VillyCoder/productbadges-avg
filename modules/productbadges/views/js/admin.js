@@ -1,4 +1,9 @@
 $(document).ready(function () {
+    // Marcar/desmarcar todos los productos
+    $('#check-all-products').on('change', function () {
+        $('input[name="product_ids[]"]').prop('checked', $(this).is(':checked'));
+    });
+
     $('.colorpicker-input').each(function () {
         var $text   = $(this);
         var $picker = $('<input>', {

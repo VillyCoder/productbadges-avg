@@ -40,6 +40,48 @@ class AdminProductBadgesController extends ModuleAdminController
         ];
     }
 
+    public function postProcess()
+    {
+        if (Tools::isSubmit('submitAssignProducts')) {
+            $id_badge    = (int) Tools::getValue('id_productbadge');
+            $product_ids = Tools::getValue('product_ids');
+
+            if (!$id_badge) {
+                $this->errors[] = $this->l('Badge no válido.');
+                return false;
+            }
+
+            // Eliminar asignaciones actuales de este badge
+            Db::getInstance()->execute(
+                'DELETE FROM `' . _DB_PREFIX_ . 'productbadges_product`
+                WHERE id_productbadge = ' . $id_badge
+            );
+
+            // Insertar las seleccionadas con INSERT IGNORE para evitar duplicados
+            if (is_array($product_ids) && !empty($product_ids)) {
+                foreach ($product_ids as $id_product) {
+                    $id_product = (int) $id_product;
+                    if ($id_product > 0) {
+                        Db::getInstance()->execute(
+                            'INSERT IGNORE INTO `' . _DB_PREFIX_ . 'productbadges_product`
+                            (id_productbadge, id_product)
+                            VALUES (' . $id_badge . ', ' . $id_product . ')'
+                        );
+                    }
+                }
+            }
+
+            $this->confirmations[] = $this->l('Asignación de productos guardada correctamente.');
+            Tools::redirectAdmin(
+                self::$currentIndex
+                . '&id_productbadge=' . $id_badge
+                . '&updateproductbadges&token=' . $this->token
+            );
+        }
+
+        return parent::postProcess();
+    }
+
     public function renderForm()
     {
         $this->fields_form = [
@@ -105,7 +147,47 @@ class AdminProductBadgesController extends ModuleAdminController
             ],
         ];
 
-        return parent::renderForm();
+        $output = parent::renderForm();
+
+        // La sección de asignación solo aparece al editar, no al crear
+        if ($this->object->id) {
+            $output .= $this->renderAssignForm();
+        }
+
+        return $output;
+    }
+
+    private function renderAssignForm()
+    {
+        $id_lang  = (int) $this->context->language->id_lang;
+        $id_badge = (int) $this->object->id;
+
+        $products = Db::getInstance()->executeS(
+            'SELECT p.id_product, pl.name
+            FROM `' . _DB_PREFIX_ . 'product` p
+            INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                ON p.id_product = pl.id_product AND pl.id_lang = ' . $id_lang . '
+            ORDER BY pl.name ASC'
+        );
+
+        $assigned = Db::getInstance()->executeS(
+            'SELECT id_product FROM `' . _DB_PREFIX_ . 'productbadges_product`
+            WHERE id_productbadge = ' . $id_badge
+        );
+
+        $assigned_ids = array_column($assigned, 'id_product');
+
+        $this->context->smarty->assign([
+            'badge_id'      => $id_badge,
+            'products'      => $products,
+            'assigned_ids'  => $assigned_ids,
+            'assign_token'  => $this->token,
+            'current_index' => self::$currentIndex,
+        ]);
+
+        return $this->context->smarty->fetch(
+            _PS_MODULE_DIR_ . $this->module->name . '/views/templates/admin/assign_products.tpl'
+        );
     }
 
     public function setMedia($isNewTheme = false)
