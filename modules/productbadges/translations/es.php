@@ -44,3 +44,8 @@ $_MODULE['<{productbadges}prestashop>adminproductbadgescontroller_84c4f546dd9281
 
 // assign_products.tpl
 $_MODULE['<{productbadges}prestashop>assign_products_e019a1942a291328ffeee5d888090572'] = 'Buscar producto...';
+$_MODULE['<{productbadges}prestashop>assign_products_4ade7e8a8fd6e0828a26943ac58429fc'] = 'Asignar productos a esta badge';
+$_MODULE['<{productbadges}prestashop>assign_products_cfba3aea0c1c3e7b26791f265db626c7'] = 'Producto';
+$_MODULE['<{productbadges}prestashop>assign_products_1a9279dc6b5e4d16b269bda7ec0eb251'] = 'No hay productos disponibles.';
+$_MODULE['<{productbadges}prestashop>assign_products_84c4f546dd9281fa392d16f4ddb551a6'] = 'Guardar asignación';
+$_MODULE['<{productbadges}prestashop>adminproductbadgescontroller_d3270bdb8d2c1caaca4178dbe19be03a'] = 'Guardar';

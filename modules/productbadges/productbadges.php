@@ -266,15 +266,20 @@ class Productbadges extends Module
 
     private function getBadgesForProduct($id_product)
     {
-        $id_lang = (int) $this->context->language->id;
-        $max     = max(1, (int) Configuration::get('PRODUCTBADGES_MAX_BADGES'));
+        $id_lang         = (int) $this->context->language->id;
+        $id_lang_default = (int) Configuration::get('PS_LANG_DEFAULT');
+        $max             = max(1, (int) Configuration::get('PRODUCTBADGES_MAX_BADGES'));
 
         return Db::getInstance()->executeS(
-            'SELECT b.id_productbadge, b.bg_color, b.text_color, b.position, bl.text
+            'SELECT b.id_productbadge, b.bg_color, b.text_color, b.position,
+                    COALESCE(NULLIF(bl.text, \'\'), bl_default.text) as text
             FROM `' . _DB_PREFIX_ . 'productbadges` b
-            INNER JOIN `' . _DB_PREFIX_ . 'productbadges_lang` bl
+            LEFT JOIN `' . _DB_PREFIX_ . 'productbadges_lang` bl
                 ON b.id_productbadge = bl.id_productbadge
                 AND bl.id_lang = ' . $id_lang . '
+            LEFT JOIN `' . _DB_PREFIX_ . 'productbadges_lang` bl_default
+                ON b.id_productbadge = bl_default.id_productbadge
+                AND bl_default.id_lang = ' . $id_lang_default . '
             INNER JOIN `' . _DB_PREFIX_ . 'productbadges_product` bp
                 ON b.id_productbadge = bp.id_productbadge
             WHERE bp.id_product = ' . (int) $id_product . '

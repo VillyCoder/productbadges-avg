@@ -130,6 +130,21 @@ Con más tiempo habría conectado **context7** con la documentación oficial de 
 - **Por qué estaba mal:** Dentro de `.product-flags` (flex column), los elementos `position: absolute` se superponen en la misma coordenada.
 - **Cómo lo corregiste:** Lo detecté al asignar dos badges al mismo producto. La IA introdujo `:not(.product-flag)` para acotar el `position: absolute` a modo standalone, y añadió `flex-direction: row; flex-wrap: wrap` al contenedor de flags.
 
+### Error 6 — Prefijo incorrecto para strings del template y clave de controlador faltante
+- **Qué generó la IA (mal):** Las cadenas del template `assign_products.tpl` ("Asignar productos a esta badge", "Guardar asignación", "Producto", "No hay productos disponibles.") registradas bajo el prefijo `adminproductbadgescontroller_` en lugar del correcto `assign_products_`. Además, la clave `adminproductbadgescontroller_*` para el botón "Guardar" del formulario estaba ausente en `en.php`.
+- **Por qué estaba mal:** PS usa el nombre del archivo fuente como prefijo de clave. Los strings de `assign_products.tpl` necesitan prefijo `assign_products_`; los de `AdminProductBadgesController.php` necesitan `adminproductbadgescontroller_`. Al tener prefijo incorrecto, PS no encontraba la traducción inglesa y mostraba el string original en español.
+- **Cómo lo corregiste:** Lo detecté al cambiar el idioma del Back Office a inglés y ver "Asignar productos a esta badge" y "Guardar asignación" en español. La corrección fue añadir las entradas con el prefijo `assign_products_` correcto (reutilizando los mismos hashes) y la clave faltante del botón Guardar.
+
+### Error 7 — La IA empeoró el Error 6 al intentar corregirlo
+- **Qué generó la IA (mal):** Al intentar corregir el Error 6, la IA recalculó todos los hashes con su propia fórmula PHP y reescribió los dos archivos de traducción completos. Esto rompió todas las claves del controlador que sí funcionaban, haciendo que etiquetas como "Color de fondo", "Color de texto", "Posición" y "Activo" también aparecieran en español en el Back Office inglés.
+- **Por qué estaba mal:** Los hashes originales los había generado PS internamente con su propio mecanismo. La fórmula `md5(strtolower(trim($s)))` que calculó la IA producía valores distintos a los que PS busca en tiempo de ejecución. El resultado fue que la "corrección" rompió lo que estaba funcionando.
+- **Cómo lo corregiste:** Lo detecté al ver que ahora había más strings en español que antes. Restauré los archivos originales desde git (`git checkout -- translations/`) y apliqué únicamente las adiciones necesarias: las claves `assign_products_` con los hashes ya existentes en el archivo, y la clave faltante del botón Guardar.
+
+### Error 8 — Badges invisibles al añadir un idioma nuevo
+- **Qué generó la IA (mal):** `getBadgesForProduct()` con `INNER JOIN` en `productbadges_lang`.
+- **Por qué estaba mal:** Al instalar el idioma inglés después de haber creado las badges, no existían filas en `productbadges_lang` para el nuevo `id_lang`. El `INNER JOIN` devolvía cero resultados y las badges desaparecían completamente en ese idioma.
+- **Cómo lo corregiste:** Lo detecté al cambiar el front office a inglés y ver que las badges no aparecían. Se cambió a `LEFT JOIN` con `COALESCE(NULLIF(bl.text, ''), bl_default.text)` para que cuando no exista traducción en el idioma activo se muestre el texto del idioma por defecto.
+
 ---
 
 ## 9. Partes que NO usé IA
