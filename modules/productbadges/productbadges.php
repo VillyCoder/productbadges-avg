@@ -56,13 +56,15 @@ class Productbadges extends Module
             && $this->registerHook('displayAfterProductThumbs')
             && $this->registerHook('actionFrontControllerSetMedia')
             && $this->installTab()
-            && $this->installSql();
+            && $this->installSql()
+            && $this->installConfig();
     }
 
     public function uninstall()
     {
         return $this->uninstallTab()
             && $this->uninstallSql()
+            && $this->deleteConfig()
             && parent::uninstall();
     }
 
@@ -131,10 +133,115 @@ class Productbadges extends Module
     // Configuración del módulo (Back Office)
     // -------------------------------------------------------------------------
 
+    private function installConfig()
+    {
+        return Configuration::updateValue('PRODUCTBADGES_ACTIVE', 1)
+            && Configuration::updateValue('PRODUCTBADGES_SHOW_LISTING', 1)
+            && Configuration::updateValue('PRODUCTBADGES_SHOW_PRODUCT', 1)
+            && Configuration::updateValue('PRODUCTBADGES_MAX_BADGES', 3);
+    }
+
+    private function deleteConfig()
+    {
+        return Configuration::deleteByName('PRODUCTBADGES_ACTIVE')
+            && Configuration::deleteByName('PRODUCTBADGES_SHOW_LISTING')
+            && Configuration::deleteByName('PRODUCTBADGES_SHOW_PRODUCT')
+            && Configuration::deleteByName('PRODUCTBADGES_MAX_BADGES');
+    }
+
     public function getContent()
     {
-        // Se implementa en la siguiente fase
-        return '';
+        $output = '';
+
+        if (Tools::isSubmit('submit_productbadges')) {
+            $active       = (int) Tools::getValue('PRODUCTBADGES_ACTIVE');
+            $show_listing = (int) Tools::getValue('PRODUCTBADGES_SHOW_LISTING');
+            $show_product = (int) Tools::getValue('PRODUCTBADGES_SHOW_PRODUCT');
+            $max_badges   = (int) Tools::getValue('PRODUCTBADGES_MAX_BADGES');
+
+            if ($max_badges < 1 || $max_badges > 10) {
+                $output .= $this->displayError($this->l('El número máximo de badges debe estar entre 1 y 10.'));
+            } else {
+                Configuration::updateValue('PRODUCTBADGES_ACTIVE', $active);
+                Configuration::updateValue('PRODUCTBADGES_SHOW_LISTING', $show_listing);
+                Configuration::updateValue('PRODUCTBADGES_SHOW_PRODUCT', $show_product);
+                Configuration::updateValue('PRODUCTBADGES_MAX_BADGES', $max_badges);
+                $output .= $this->displayConfirmation($this->l('Configuración guardada correctamente.'));
+            }
+        }
+
+        return $output . $this->renderConfigForm();
+    }
+
+    private function renderConfigForm()
+    {
+        $fields_form = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Configuración'),
+                    'icon'  => 'icon-cogs',
+                ],
+                'input' => [
+                    [
+                        'type'    => 'switch',
+                        'label'   => $this->l('Módulo activo'),
+                        'name'    => 'PRODUCTBADGES_ACTIVE',
+                        'is_bool' => true,
+                        'values'  => [
+                            ['id' => 'active_on',  'value' => 1, 'label' => $this->l('Sí')],
+                            ['id' => 'active_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
+                    [
+                        'type'    => 'switch',
+                        'label'   => $this->l('Mostrar en listados'),
+                        'name'    => 'PRODUCTBADGES_SHOW_LISTING',
+                        'is_bool' => true,
+                        'values'  => [
+                            ['id' => 'listing_on',  'value' => 1, 'label' => $this->l('Sí')],
+                            ['id' => 'listing_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
+                    [
+                        'type'    => 'switch',
+                        'label'   => $this->l('Mostrar en ficha de producto'),
+                        'name'    => 'PRODUCTBADGES_SHOW_PRODUCT',
+                        'is_bool' => true,
+                        'values'  => [
+                            ['id' => 'product_on',  'value' => 1, 'label' => $this->l('Sí')],
+                            ['id' => 'product_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
+                    [
+                        'type'  => 'text',
+                        'label' => $this->l('Máximo de badges por producto'),
+                        'name'  => 'PRODUCTBADGES_MAX_BADGES',
+                        'class' => 'fixed-width-xs',
+                        'hint'  => $this->l('Número entre 1 y 10.'),
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->l('Guardar'),
+                    'class' => 'btn btn-default pull-right',
+                ],
+            ],
+        ];
+
+        $helper = new HelperForm();
+        $helper->module          = $this;
+        $helper->name_controller = $this->name;
+        $helper->token           = Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex    = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->default_form_language    = (int) Configuration::get('PS_LANG_DEFAULT');
+        $helper->allow_employee_form_lang = (int) Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
+        $helper->submit_action   = 'submit_productbadges';
+
+        $helper->fields_value['PRODUCTBADGES_ACTIVE']       = (int) Configuration::get('PRODUCTBADGES_ACTIVE');
+        $helper->fields_value['PRODUCTBADGES_SHOW_LISTING'] = (int) Configuration::get('PRODUCTBADGES_SHOW_LISTING');
+        $helper->fields_value['PRODUCTBADGES_SHOW_PRODUCT'] = (int) Configuration::get('PRODUCTBADGES_SHOW_PRODUCT');
+        $helper->fields_value['PRODUCTBADGES_MAX_BADGES']   = (int) Configuration::get('PRODUCTBADGES_MAX_BADGES');
+
+        return $helper->generateForm([$fields_form]);
     }
 
     // -------------------------------------------------------------------------
